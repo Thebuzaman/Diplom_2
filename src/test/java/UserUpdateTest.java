@@ -1,5 +1,7 @@
+import io.qameta.allure.Description;
 import praktikum.BaseHttpClient;
 import praktikum.constants.EndPoints;
+import praktikum.constants.Messages;
 import praktikum.pojo.User;
 import com.github.javafaker.Faker;
 import io.qameta.allure.Step;
@@ -23,14 +25,14 @@ public class UserUpdateTest extends BaseHttpClient {
     Response response;
 
     @Before
-    @Step("Создание нового пользователя")
+    @Description("Создание нового пользователя")
     public void setData() {
         User user = new User(email, password, name);
         response = postRequest(EndPoints.USER_CREATE_POST, user);
         accessToken = response.then().extract().path("accessToken").toString();
     }
     @After
-    @Step("Удаление созданного пользователя")
+    @Description("Удаление созданного пользователя")
     public  void cleanData() {
         int statusCode = response.then().extract().statusCode();
         if (statusCode == 200) {
@@ -40,25 +42,36 @@ public class UserUpdateTest extends BaseHttpClient {
 
     @Test
     @DisplayName("Изменение данных пользователя с авторизацией")
-    @Step("Проверка статуса 200 и поля 'success': true")
-    public void checkUpdateDataWhenUserIsAuthorized() {
+    @Description("Проверка статуса 200 и поля 'success': true")
+    public void checkUpdateEmailWhenUserIsAuthorized() {
         postRequest(EndPoints.USER_LOGIN_POST, new User(email, password));
-        Response patchResponse = patchRequest(EndPoints.ACTIONS_WITH_USER,new User(emailPatch, passwordPatch, namePatch) ,accessToken);
+        Response patchResponse = patchRequest(EndPoints.ACTIONS_WITH_USER,new User(emailPatch, password, name) ,accessToken);
         patchResponse.then().statusCode(200)
                 .and()
-                .body("user.email", equalTo(emailPatch))
+                .body("user.email", equalTo(emailPatch));
+
+    }
+
+    @Test
+    @DisplayName("Изменение данных пользователя с авторизацией")
+    @Description("Проверка статуса 200 и поля 'success': true")
+    public void checkUpdateNameWhenUserIsAuthorized() {
+        postRequest(EndPoints.USER_LOGIN_POST, new User(email, password));
+        Response patchResponse = patchRequest(EndPoints.ACTIONS_WITH_USER,new User(email, password, namePatch) ,accessToken);
+        patchResponse.then().statusCode(200)
+                .and()
                 .body("user.name", equalTo(namePatch));
 
     }
 
     @Test
     @DisplayName("Изменение данных пользователя без авторизации")
-    @Step("Проверка статуса 401 и поля 'success': false")
+    @Description("Проверка статуса 401 и поля 'message': You should be authorised")
     public void checkUpdateDataWhenUserIsUnauthorized() {
         Response patchResponse = patchRequest(EndPoints.ACTIONS_WITH_USER,new User(emailPatch, passwordPatch, namePatch) ,accessToken);
         patchResponse.then().statusCode(401)
                 .and()
-                .body("success", equalTo(false));
-
+                .body("success", equalTo(false))
+                .body("message", equalTo(Messages.authorizationMessage));
     }
 }

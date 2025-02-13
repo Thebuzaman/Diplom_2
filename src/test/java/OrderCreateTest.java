@@ -1,9 +1,10 @@
+import io.qameta.allure.Description;
 import praktikum.BaseHttpClient;
 import praktikum.constants.EndPoints;
+import praktikum.constants.Messages;
 import praktikum.pojo.Order;
 import praktikum.pojo.User;
 import com.github.javafaker.Faker;
-import io.qameta.allure.Step;
 import io.qameta.allure.junit4.DisplayName;
 import io.restassured.response.Response;
 import org.junit.After;
@@ -23,14 +24,14 @@ public class OrderCreateTest extends BaseHttpClient {
     Response response;
 
     @Before
-    @Step("Создание нового пользователя")
+    @Description("Создание нового пользователя")
     public void setData() {
         User user = new User(email, password, name);
         response = postRequest(EndPoints.USER_CREATE_POST, user);
         listAvailableIngredients = getRequest(EndPoints.INGREDIENTS_LIST_GET, "").then().extract().path("data._id");
     }
     @After
-    @Step("Удаление созданного пользователя")
+    @Description("Удаление созданного пользователя")
     public  void cleanData() {
         String accessToken;
         int statusCode = response.then().extract().statusCode();
@@ -42,7 +43,7 @@ public class OrderCreateTest extends BaseHttpClient {
 
     @Test
     @DisplayName("Создание заказа авторизированным пользователем")
-    @Step("Проверка статуса 200 и поля 'success': true")
+    @Description("Проверка статуса 200 и поля 'success': true")
     public void checkOrderCreationWithAuthorization() {
         Order order = new Order(listAvailableIngredients.subList(0, 1));
         postRequest(EndPoints.USER_LOGIN_POST, new User(email, password));
@@ -55,38 +56,37 @@ public class OrderCreateTest extends BaseHttpClient {
 
     @Test
     @DisplayName("Создание заказа без авторизации")
-    @Step("Проверка статуса 401 и поля 'success': false")
+    @Description("Проверка статуса 401 и поля 'message': You should be authorised")
     public void checkOrderCreationWithoutAuthorization() {
         Order order = new Order(listAvailableIngredients.subList(0, 1));
         Response orderResponse = postRequest(EndPoints.ORDER_CREATE_POST, order);
         orderResponse.then().statusCode(401)
                 .and()
-                .body("success", equalTo(false));
-
+                .body("success", equalTo(false))
+                .body("message", equalTo(Messages.authorizationMessage));
     }
 
     @Test
     @DisplayName("Создание заказа без ингредиентов авторизированным пользователем")
-    @Step("Проверка статуса 400 и поля 'success': false")
+    @Description("Проверка статуса 400 и поля 'message': Ingredient ids must be provided")
     public void checkOrderCreationWithoutIngredients() {
         Order order = new Order(null);
         postRequest(EndPoints.USER_LOGIN_POST, new User(email, password));
         Response orderResponse = postRequest(EndPoints.ORDER_CREATE_POST, order);
         orderResponse.then().statusCode(400)
                 .and()
-                .body("success", equalTo(false));
-
+                .body("success", equalTo(false))
+                .body("message", equalTo(Messages.ingredientsMessage));
     }
 
     @Test
     @DisplayName("Создание заказа без ингредиентов авторизированным пользователем")
-    @Step("Проверка статуса 500 и поля 'success': false")
+    @Description("Проверка статуса 500 и поля 'success': false")
     public void checkOrderCreationWithWrongIngredients() {
         Order order = new Order(listUnavailableIngredients);
         postRequest(EndPoints.USER_LOGIN_POST, new User(email, password));
         Response orderResponse = postRequest(EndPoints.ORDER_CREATE_POST, order);
         orderResponse.then().statusCode(500);
-
     }
 
 }

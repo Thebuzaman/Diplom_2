@@ -1,5 +1,7 @@
+import io.qameta.allure.Description;
 import praktikum.BaseHttpClient;
 import praktikum.constants.EndPoints;
+import praktikum.constants.Messages;
 import praktikum.pojo.User;
 import com.github.javafaker.Faker;
 import io.qameta.allure.Step;
@@ -15,17 +17,19 @@ public class UserLoginTest extends BaseHttpClient {
     Faker faker = new Faker();
     String email = faker.internet().emailAddress();
     String password = faker.internet().password();
+    String emailIncorrect = faker.internet().emailAddress();
+    String passwordIncorrect = faker.internet().password();
     String name = faker.name().username();
     Response response;
 
     @Before
-    @Step("Создание нового пользователя")
+    @Description("Создание нового пользователя")
     public void setData() {
         User user = new User(email, password, name);
         response = postRequest(EndPoints.USER_CREATE_POST, user);
     }
     @After
-    @Step("Удаление созданного пользователя")
+    @Description("Удаление созданного пользователя")
     public  void cleanData() {
         String accessToken;
         int statusCode = response.then().extract().statusCode();
@@ -37,7 +41,7 @@ public class UserLoginTest extends BaseHttpClient {
 
     @Test
     @DisplayName("Авторизация существующего пользователя с обязательными полями")
-    @Step("Проверка статуса 200 и поля 'success': true")
+    @Description("Проверка статуса 200 и поля 'success': true")
     public void checkUserLogin() {
         Response loginResponse = postRequest(EndPoints.USER_LOGIN_POST, new User(email, password));
         loginResponse.then().statusCode(200)
@@ -47,24 +51,45 @@ public class UserLoginTest extends BaseHttpClient {
     }
 
     @Test
+    @DisplayName("Авторизация существующего пользователя с неправильной почтой")
+    @Description("Проверка статуса 401 и поля 'message': email or password are incorrect")
+    public void checkUserLoginWithIncorrectEmail() {
+        Response loginResponse = postRequest(EndPoints.USER_LOGIN_POST, new User(emailIncorrect, password));
+        loginResponse.then().statusCode(401)
+                .and()
+                .body("success", equalTo(false))
+                .body("message", equalTo(Messages.incorrectLoginMessage));
+    }
+
+    @Test
+    @DisplayName("Авторизация существующего пользователя с неправильным паролем")
+    @Description("Проверка статуса 401 и поля 'message': email or password are incorrect")
+    public void checkUserLoginWithIncorrectPassword() {
+        Response loginResponse = postRequest(EndPoints.USER_LOGIN_POST, new User(email, passwordIncorrect));
+        loginResponse.then().statusCode(401)
+                .and()
+                .body("success", equalTo(false))
+                .body("message", equalTo(Messages.incorrectLoginMessage));
+    }
+    @Test
     @DisplayName("Авторизация существующего пользователя без ввода почты")
-    @Step("Проверка статуса 401 и поля 'success': false")
+    @Description("Проверка статуса 401 и поля 'message': email or password are incorrect")
     public void checkUserLoginWithoutEmail() {
         Response loginResponse = postRequest(EndPoints.USER_LOGIN_POST, new User(null, password));
         loginResponse.then().statusCode(401)
                 .and()
-                .body("success", equalTo(false));
-
+                .body("success", equalTo(false))
+                .body("message", equalTo(Messages.incorrectLoginMessage));
     }
 
     @Test
     @DisplayName("Авторизация существующего пользователя без ввода пароля")
-    @Step("Проверка статуса 401 и поля 'success': false")
+    @Description("Проверка статуса 401 и поля 'message': email or password are incorrect")
     public void checkUserLoginWithoutPassword() {
         Response loginResponse = postRequest(EndPoints.USER_LOGIN_POST, new User(email, null));
         loginResponse.then().statusCode(401)
                 .and()
-                .body("success", equalTo(false));
-
+                .body("success", equalTo(false))
+                .body("message", equalTo(Messages.incorrectLoginMessage));
     }
 }

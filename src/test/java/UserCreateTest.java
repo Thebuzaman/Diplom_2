@@ -1,8 +1,9 @@
+import io.qameta.allure.Description;
 import praktikum.BaseHttpClient;
 import praktikum.constants.EndPoints;
+import praktikum.constants.Messages;
 import praktikum.pojo.User;
 import com.github.javafaker.Faker;
-import io.qameta.allure.Step;
 import io.qameta.allure.junit4.DisplayName;
 import io.restassured.response.Response;
 import org.junit.After;
@@ -17,7 +18,7 @@ public class UserCreateTest extends BaseHttpClient {
     Response response;
 
     @After
-    @Step("Удаление созданного пользователя")
+    @Description("Удаление созданного пользователя")
     public  void cleanData() {
         String accessToken;
         int statusCode = response.then().extract().statusCode();
@@ -29,19 +30,18 @@ public class UserCreateTest extends BaseHttpClient {
 
     @Test
     @DisplayName("Создание уникального пользователя")
-    @Step("Проверка статуса 200 и поля 'success': true")
+    @Description("Проверка статуса 200 и поля 'success': true")
     public void checkUserRegistration() {
         User user = new User(email, password, name);
         response = postRequest(EndPoints.USER_CREATE_POST, user);
         response.then().statusCode(200)
                 .and()
                 .body("success", equalTo(true));
-
     }
 
     @Test
     @DisplayName("Повторное создание уже существующего пользователя")
-    @Step("Проверка статуса 403 и поля 'success': false")
+    @Description("Проверка статуса 403 и поля 'message': User already exists")
     public void checkUserRegistrationAlreadyRegistered() {
         User user = new User(email, password, name);
         response = postRequest(EndPoints.USER_CREATE_POST, user);
@@ -49,43 +49,44 @@ public class UserCreateTest extends BaseHttpClient {
         Response responseSecond = postRequest(EndPoints.USER_CREATE_POST, user);
         responseSecond.then().statusCode(403)
                 .and()
-                .body("success", equalTo(false));
+                .body("success", equalTo(false))
+                .body("message", equalTo(Messages.existingUserMessage));
 
     }
 
     @Test
     @DisplayName("Создание уникального пользователя без поля email")
-    @Step("Проверка статуса 403 и поля 'success': false")
+    @Description("Проверка статуса 403 и поля 'message': Email, password and name are required fields")
     public void checkUserRegistrationWithoutEmail() {
         User user = new User(null, password, name);
         response = postRequest(EndPoints.USER_CREATE_POST, user);
         response.then().statusCode(403)
                 .and()
-                .body("success", equalTo(false));
-
+                .body("success", equalTo(false))
+                .body("message", equalTo(Messages.requiredFieldMessage));
     }
 
     @Test
     @DisplayName("Создание уникального пользователя без поля password")
-    @Step("Проверка статуса 403 и поля 'success': false")
+    @Description("Проверка статуса 403 и поля 'message': Email, password and name are required fields")
     public void checkUserRegistrationWithoutPassword() {
         User user = new User(email, null, name);
         response = postRequest(EndPoints.USER_CREATE_POST, user);
         response.then().statusCode(403)
                 .and()
-                .body("success", equalTo(false));
-
+                .body("success", equalTo(false))
+                .body("message", equalTo(Messages.requiredFieldMessage));
     }
 
     @Test
     @DisplayName("Создание уникального пользователя без поля name")
-    @Step("Проверка статуса 403 и поля 'success': false")
+    @Description("Проверка статуса 403 и поля 'message': Email, password and name are required fields")
     public void checkUserRegistrationWithoutName() {
         User user = new User(email, password, null);
         response = postRequest(EndPoints.USER_CREATE_POST, user);
         response.then().statusCode(403)
                 .and()
-                .body("success", equalTo(false));
-
+                .body("success", equalTo(false))
+                .body("message", equalTo(Messages.requiredFieldMessage));
     }
 }

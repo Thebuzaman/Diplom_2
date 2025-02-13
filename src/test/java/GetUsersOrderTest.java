@@ -1,9 +1,10 @@
+import io.qameta.allure.Description;
 import praktikum.BaseHttpClient;
 import praktikum.constants.EndPoints;
+import praktikum.constants.Messages;
 import praktikum.pojo.Order;
 import praktikum.pojo.User;
 import com.github.javafaker.Faker;
-import io.qameta.allure.Step;
 import io.qameta.allure.junit4.DisplayName;
 import io.restassured.response.Response;
 import org.junit.After;
@@ -23,14 +24,14 @@ public class GetUsersOrderTest extends BaseHttpClient {
     Response response;
 
     @Before
-    @Step("Создание нового пользователя")
+    @Description("Создание нового пользователя")
     public void setData() {
         User user = new User(email, password, name);
         response = postRequest(EndPoints.USER_CREATE_POST, user);
         accessToken = response.then().extract().path("accessToken").toString();
     }
     @After
-    @Step("Удаление созданного пользователя")
+    @Description("Удаление созданного пользователя")
     public  void cleanData() {
         int statusCode = response.then().extract().statusCode();
         if (statusCode == 200) {
@@ -40,7 +41,7 @@ public class GetUsersOrderTest extends BaseHttpClient {
 
     @Test
     @DisplayName("Получение заказа авторизированного пользователя")
-    @Step("Проверка статуса 200 и поля 'success': true")
+    @Description("Проверка статуса 200 и поля 'success': true")
     public void checkOrderCreationWithAuthorization() {
         List<String> listAvailableIngredients = getRequest(EndPoints.INGREDIENTS_LIST_GET, "").then().extract().path("data._id");
         Order order = new Order(listAvailableIngredients.subList(0, 1));
@@ -54,12 +55,12 @@ public class GetUsersOrderTest extends BaseHttpClient {
 
     @Test
     @DisplayName("Получение заказа неавторизированного пользователя")
-    @Step("Проверка статуса 401 и поля 'success': false")
+    @Description("Проверка статуса 401 и поля 'message': You should be authorised")
     public void checkOrderCreationWithoutAuthorization() {
         Response orderGetOrderResponse = getRequest(EndPoints.USERS_ORDER_GET, "");
         orderGetOrderResponse.then().statusCode(401)
                 .and()
-                .body("success", equalTo(false));
-
+                .body("success", equalTo(false))
+                .body("message", equalTo(Messages.authorizationMessage));
     }
 }
