@@ -4,7 +4,6 @@ import praktikum.constants.EndPoints;
 import praktikum.constants.Messages;
 import praktikum.pojo.User;
 import com.github.javafaker.Faker;
-import io.qameta.allure.Step;
 import io.qameta.allure.junit4.DisplayName;
 import io.restassured.response.Response;
 import org.junit.After;
@@ -68,7 +67,7 @@ public class UserUpdateTest extends BaseHttpClient {
     @DisplayName("Изменение данных пользователя без авторизации")
     @Description("Проверка статуса 401 и поля 'message': You should be authorised")
     public void checkUpdateDataWhenUserIsUnauthorized() {
-        Response patchResponse = patchRequest(EndPoints.ACTIONS_WITH_USER,new User(emailPatch, passwordPatch, namePatch) ,accessToken);
+        Response patchResponse = patchRequest(EndPoints.ACTIONS_WITH_USER,new User(emailPatch, passwordPatch, namePatch) ,"");
         patchResponse.then().statusCode(401)
                 .and()
                 .body("success", equalTo(false))

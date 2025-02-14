@@ -4,7 +4,6 @@ import praktikum.constants.EndPoints;
 import praktikum.constants.Messages;
 import praktikum.pojo.User;
 import com.github.javafaker.Faker;
-import io.qameta.allure.Step;
 import io.qameta.allure.junit4.DisplayName;
 import io.restassured.response.Response;
 import org.junit.After;
